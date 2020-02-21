@@ -8,7 +8,7 @@ INCLUDES := $(shell find $(INCDIR) -name "*.h")
 
 BIN_NAME := main
 
-default:
+default: clean
 	{ \
 	set -e;\
 	mkdir bin;\
