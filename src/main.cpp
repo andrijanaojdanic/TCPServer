@@ -1,16 +1,26 @@
 #include <iostream>
-#include <cerrno>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#include "TCPServer.hpp"
 
 constexpr static int DEFAULT_PROTOCOL = 0;
 constexpr static int RECV_BUF_SZ = 1024;
 
 int main()
 {
-    int serverSocketFd = 0;
+    TCPServer tcpServer =  TCPServer();
+    
+    try{
+        tcpServer.initServer();
+    }
+    catch(ServerException e){
+        std::cout << e.what() << std::endl;
+    }
+
+	return 0;
+}
+
+
+/*
+int serverSocketFd = 0;
     struct sockaddr_in serverAddress;
         serverAddress.sin_family = AF_INET;
         serverAddress.sin_port   = htons(5000), // htons = Host To Network Short, makes sure that bytes are stored in network data order
@@ -32,7 +42,7 @@ int main()
     }
     else
     {
-        // Bind socet to inet addr
+        // Bind socket to inet addr
         if (bind(serverSocketFd, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) != 0)
         {
             perror("Error binding socket");
@@ -82,10 +92,8 @@ int main()
         }
     }
 
-   
 
-	return 0;
-}
 
+*/
 
 
