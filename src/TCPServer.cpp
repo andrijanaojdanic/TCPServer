@@ -1,18 +1,25 @@
 #include "TCPServer.hpp"
 
-TCPServer::TCPServer(uint16_t _port, uint32_t _address, uint16_t _maxNumOfClients): 
+TCPServer::TCPServer(uint16_t _port, uint32_t _address, uint16_t _maxNumOfClients, uint16_t _rcvBufSize, uint16_t _sndBufSize): 
     port(_port), 
     address(_address),
-    maxNumOfClients(_maxNumOfClients)
+    maxNumOfClients(_maxNumOfClients),
+    receiveBufferSize(_rcvBufSize),
+    sendBufferSize(_sndBufSize)
 {
     serverSocketFd = 0;
-
+    
     serverInterface.sin_family = AF_INET;
     serverInterface.sin_port   = htons(port), // htons = Host To Network Short, makes sure that bytes are stored in network data order
     serverInterface.sin_addr.s_addr = htonl(address); // htonl = Host To Network Long, works with 32b integers
 
     clientAddressLen = sizeof(struct sockaddr);
+    receiveBuffer = new char[receiveBufferSize];
+}
 
+TCPServer::~TCPServer()
+{
+    delete [] receiveBuffer;
 }
 
 void TCPServer::initServer() 
@@ -42,34 +49,53 @@ void TCPServer::acceptConnection()
 {
     std::cout << "Waiting for connection..." << std::endl; // TODO postace Terminal.writeln("Waiting for connection...");
 
+    Client* client = new(std::nothrow) Client;
+    client->addressLen = sizeof(struct sockaddr);
+
     // Accept connection
-    clientSocketFd = accept(serverSocketFd, &clientAddress, &clientAddressLen);
-    if (clientSocketFd < 0)
+    client->socketFd = accept(serverSocketFd, &(client->address), &(client->addressLen));
+    if (client == nullptr)
     {
+        throw ServerException("Memory allocation failed");
+    }
+    else if (client->socketFd < 0)
+    {
+        delete client;
         throw ServerException("Error accepting connection");
     }
+    client->vectorPosition = clients.size();
+    client->receiveBuffer = new char[receiveBufferSize];
+    client->sendBuffer = new char[sendBufferSize];
+    clients.push_back(client);
 }
 
 void TCPServer::receiveMessage()
 {
+    const Client* client = clients.at(0);
+
     while(true){
         // Receive Message
-        int msgSize = recv(clientSocketFd, recv_buffer, 1024, 0);
+        int msgSize = recv(client->socketFd, client->receiveBuffer, receiveBufferSize, 0);
         if (msgSize == -1)
         {
             throw ServerException("Error receiving from client");    
         }
         else if (msgSize == 0)
         {
-            close(clientSocketFd);
+            close(client->socketFd);
+            clients.erase(clients.begin()+client->vectorPosition);
+            delete[] client->receiveBuffer;
+            delete[] client->sendBuffer;
+            delete client;
             std::cout << "Connection with client " << clientSocketFd << " ended." << std::endl;
             break;
         }
         else
         {
-            std::cout << "Received message: " << recv_buffer << std::endl;
+            client->receiveBuffer[msgSize] = '\0';
+            std::cout << "Received message: " << client->receiveBuffer << std::endl;
             // Echo Message
-            if (!send(clientSocketFd, recv_buffer, msgSize, 0))
+            if (!send(client->socketFd, client->receiveBuffer, msgSize, 0))
             {
                 throw ServerException("Error sending echo message back");                    
             }
