@@ -6,15 +6,22 @@
 #include <netinet/in.h>
 #include <vector>
 #include <iostream>
+#include <cstdint>
 #include "ServerException.hpp"
+#include <unistd.h>
 
 class TCPServer {
     
-    int port;
     int serverSocketFd; // initialized
-    struct sockaddr_in serverAddress;    
-    std::vector<struct sockaddr> clients;
-    static constexpr int clientAddressLen = sizeof(struct sockaddr);
+    uint16_t port;
+    uint32_t address;
+    uint16_t maxNumOfClients;    
+    struct sockaddr_in serverInterface;    
+
+    int clientSocketFd;
+    struct sockaddr clientAddress;
+    char recv_buffer[1024];
+    socklen_t clientAddressLen; // initialized
 
     void createSocket();
     void bindSocket();
@@ -22,12 +29,13 @@ class TCPServer {
 
 public:
 
-    TCPServer(int _port=5000); // TODO add address at some point
-    void initServer();
+    TCPServer(uint16_t _port=5000, uint32_t _address=INADDR_ANY, uint16_t _maxNumOfClients=10);
+
+    void initServer();  // throws ServerException
     void runServer(); // TODO potentially put functionality here
-    void acceptConnection();
-    void receiveMessage();
-    void sendMessage();
+    void acceptConnection(); // throws ServerException
+    void receiveMessage(); // throws ServerException
+    void sendMessage(); // throws ServerException
     void closeConnection();
 };
 

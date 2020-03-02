@@ -10,6 +10,13 @@ int main()
     
     try{
         tcpServer.initServer();
+        
+        while(true)
+        {
+            tcpServer.acceptConnection(); 
+            tcpServer.receiveMessage(); 
+        }
+  
     }
     catch(ServerException e){
         std::cout << e.what() << std::endl;
@@ -71,7 +78,7 @@ int serverSocketFd = 0;
                         // Receive end echo messages
                         msgSize = recv(clientSocketFd, recv_buffer, RECV_BUF_SZ, 0);
                         if (msgSize > 0)
-                        {
+                        {l
                             std::cout << recv_buffer << std::endl;
                             if (!send(clientSocketFd, recv_buffer, msgSize, 0))
                             {
