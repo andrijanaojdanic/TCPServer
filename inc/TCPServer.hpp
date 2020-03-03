@@ -9,6 +9,7 @@
 #include <cstdint>
 #include "ServerException.hpp"
 #include <unistd.h>
+#include <arpa/inet.h>
 
 class TCPServer {
 
@@ -25,7 +26,7 @@ private:
     typedef struct{
         int socketFd;
         int vectorPosition;
-        struct sockaddr address;
+        struct sockaddr_in address;
         char * receiveBuffer;
         char * sendBuffer;
         socklen_t addressLen;

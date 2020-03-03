@@ -42,7 +42,7 @@ void TCPServer::initServer()
     {
         throw ServerException("Error putting socket in server mode");   
     }
-    
+
 }
 
 void TCPServer::acceptConnection()
@@ -50,10 +50,10 @@ void TCPServer::acceptConnection()
     std::cout << "Waiting for connection..." << std::endl; // TODO postace Terminal.writeln("Waiting for connection...");
 
     Client* client = new(std::nothrow) Client;
-    client->addressLen = sizeof(struct sockaddr);
+    client->addressLen = sizeof(client->address);
 
     // Accept connection
-    client->socketFd = accept(serverSocketFd, &(client->address), &(client->addressLen));
+    client->socketFd = accept(serverSocketFd, (struct sockaddr *)(&(client->address)), &(client->addressLen));
     if (client == nullptr)
     {
         throw ServerException("Memory allocation failed");
@@ -64,9 +64,17 @@ void TCPServer::acceptConnection()
         throw ServerException("Error accepting connection");
     }
     client->vectorPosition = clients.size();
+    client->address.sin_family = AF_INET;
     client->receiveBuffer = new char[receiveBufferSize];
     client->sendBuffer = new char[sendBufferSize];
     clients.push_back(client);
+
+    std::cout << "Client: " << std::endl 
+              << "socketFd" << client->socketFd << std::endl   
+              << "vectorPosition" << client->vectorPosition << std::endl      
+              << "address" << inet_ntoa(client->address.sin_addr) << std::endl  
+              << "port" << ntohs(client->address.sin_port) << std::endl 
+              << "addressLen" << client->socketFd << std::endl;
 }
 
 void TCPServer::receiveMessage()
@@ -87,7 +95,7 @@ void TCPServer::receiveMessage()
             delete[] client->receiveBuffer;
             delete[] client->sendBuffer;
             delete client;
-            std::cout << "Connection with client " << clientSocketFd << " ended." << std::endl;
+            std::cout << "Connection with client " << client->socketFd << " ended." << std::endl;
             break;
         }
         else
