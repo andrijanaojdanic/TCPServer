@@ -34,12 +34,6 @@ private:
 
     std::vector<Client*> clients;
 
-    int clientSocketFd;
-    struct sockaddr clientAddress;
-    char * receiveBuffer;
-    char * sendBuffer;
-    socklen_t clientAddressLen; // initialized
-
     void createSocket();    // TODO implementirati ovo zarad lepote koda
     void bindSocket();      // TODO implementirati ovo zarad lepote koda
     void startListening();  // TODO implementirati ovo zarad lepote koda

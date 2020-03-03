@@ -10,16 +10,13 @@ TCPServer::TCPServer(uint16_t _port, uint32_t _address, uint16_t _maxNumOfClient
     serverSocketFd = 0;
     
     serverInterface.sin_family = AF_INET;
-    serverInterface.sin_port   = htons(port), // htons = Host To Network Short, makes sure that bytes are stored in network data order
+    serverInterface.sin_port   = htons(port); // htons = Host To Network Short, makes sure that bytes are stored in network data order
     serverInterface.sin_addr.s_addr = htonl(address); // htonl = Host To Network Long, works with 32b integers
-
-    clientAddressLen = sizeof(struct sockaddr);
-    receiveBuffer = new char[receiveBufferSize];
 }
 
 TCPServer::~TCPServer()
 {
-    delete [] receiveBuffer;
+    // TODO postaraj se da pri gasenju servera delete-ujes sve sto je u listi klijenata
 }
 
 void TCPServer::initServer() 
@@ -47,9 +44,10 @@ void TCPServer::initServer()
 
 void TCPServer::acceptConnection()
 {
-    std::cout << "Waiting for connection..." << std::endl; // TODO postace Terminal.writeln("Waiting for connection...");
-
+    std::cout << "Waiting for connection..." << std::endl;
+    
     Client* client = new(std::nothrow) Client;
+    client->address.sin_family = AF_INET;
     client->addressLen = sizeof(client->address);
 
     // Accept connection
@@ -63,18 +61,18 @@ void TCPServer::acceptConnection()
         delete client;
         throw ServerException("Error accepting connection");
     }
+
     client->vectorPosition = clients.size();
-    client->address.sin_family = AF_INET;
     client->receiveBuffer = new char[receiveBufferSize];
     client->sendBuffer = new char[sendBufferSize];
     clients.push_back(client);
 
     std::cout << "Client: " << std::endl 
-              << "socketFd" << client->socketFd << std::endl   
-              << "vectorPosition" << client->vectorPosition << std::endl      
-              << "address" << inet_ntoa(client->address.sin_addr) << std::endl  
-              << "port" << ntohs(client->address.sin_port) << std::endl 
-              << "addressLen" << client->socketFd << std::endl;
+              << "socketFd: " << client->socketFd << std::endl   
+              << "vectorPosition: " << client->vectorPosition << std::endl      
+              << "address: " << inet_ntoa(client->address.sin_addr) << std::endl  
+              << "port: " << ntohs(client->address.sin_port) << std::endl 
+              << "addressLen: " << client->socketFd << std::endl;
 }
 
 void TCPServer::receiveMessage()
@@ -91,11 +89,12 @@ void TCPServer::receiveMessage()
         else if (msgSize == 0)
         {
             close(client->socketFd);
-            clients.erase(clients.begin()+client->vectorPosition);
+            clients.erase(clients.begin()+client->vectorPosition); // remove client from clients vector
             delete[] client->receiveBuffer;
             delete[] client->sendBuffer;
+            std::cout << "Connection with client " << inet_ntoa(client->address.sin_addr) << ":"
+                                                   << ntohs(client->address.sin_port) << " ended." << std::endl;
             delete client;
-            std::cout << "Connection with client " << client->socketFd << " ended." << std::endl;
             break;
         }
         else
