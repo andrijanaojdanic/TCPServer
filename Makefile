@@ -9,6 +9,7 @@ INCLUDES := $(shell find $(INCDIR) -name "*.h")
 INCDIRS := $(shell pwd)/inc
 
 BIN_NAME := main
+BIN_NAME_ARM := main_arm
 
 default: clean
 	{ \
@@ -16,6 +17,13 @@ default: clean
 	mkdir bin;\
 	g++ -I$(INCDIRS) $(INCLUDES) $(SOURCES) -o $(BINDIR)/$(BIN_NAME);\
 	}
+arm: clean
+	{ \
+	set -e;\
+	mkdir bin;\
+	arm-linux-gnueabihf-g++ -I$(INCDIRS) $(INCLUDES) $(SOURCES) -o $(BINDIR)/$(BIN_NAME_ARM);\
+	}
+    
 clean:
 	rm -f -r $(BINDIR)
 run:
